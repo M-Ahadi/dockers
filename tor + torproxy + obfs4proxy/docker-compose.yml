@@ -1,0 +1,15 @@
+version: '2.3'
+services:
+  mytor:
+    restart: always
+    image: tor:0.1.8
+    environment:
+      - BW=100
+    volumes:
+      - ./torrc:/etc/tor/torrc:ro
+    ports:
+      - 9050:9050
+      - 9051:9051
+      - 8118:8118
+    
+  
