@@ -1,0 +1,7 @@
+venv/
+.dockerfile
+.gitignore
+
+
+bot/log*
+.idea

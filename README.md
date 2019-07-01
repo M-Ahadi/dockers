@@ -7,3 +7,7 @@ Here is list of dockers I use in my daily work and life.
 
 ## Log
 - Graylog
+
+## Bots
+- Bale Platform Bot
+- Telegram Platform Bot
