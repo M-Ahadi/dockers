@@ -1,0 +1,42 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: nginx-k8s-deployment
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: nginx-k8s-deployment
+        group: artifactory-k8s-demo
+    spec:
+      containers:
+      - name: nginx-k8s
+        image: docker.bintray.io/jfrog/nginx-artifactory-pro:6.11.1
+        env:
+        - name: ART_BASE_URL
+          value: "http://artifactory-pro:8081/artifactory"
+        - name: SSL
+          value: "true"
+        ports:
+        - containerPort: 80
+        - containerPort: 443
+        resources:
+          requests:
+            memory: "100Mi"
+            cpu: "100m"
+          limits:
+            memory: "200Mi"
+            cpu: "200m"
+        volumeMounts:
+        - mountPath: "/var/opt/jfrog/nginx"
+          name: nginx-volume
+        - mountPath: "/var/opt/jfrog/nginx/ssl"
+          name: ssl-secret-volume
+      volumes:
+      - name: nginx-volume
+        persistentVolumeClaim:
+          claimName: nginx-claim
+      - name: ssl-secret-volume
+        secret:
+          secretName: art-tls

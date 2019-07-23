@@ -1,0 +1,145 @@
+apiVersion: v1
+kind: Template
+labels:
+  template: Xray-Analysis
+message: |-
+  The following service(s) have been created in your project: xray-analysis.
+
+         Connection URL: http://xray-analysis:7000
+metadata:
+  annotations:
+    description: |-
+      Xray Analysis Template
+
+      NOTE: Scaling to more than one replica is not supported. You must have persistent volumes available in your cluster to use this template.
+    openshift.io/display-name: JFrog Xray Analysis
+    tags: ci-cd,build,repository
+  name: xray-analysis
+objects:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: analysis
+  spec:
+    ports:
+    - name: 7000-tcp
+      port: 7000
+      protocol: TCP
+      targetPort: 7000
+    selector:
+      name: analysis
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    name: analysis
+  spec:
+    replicas: 1
+    selector:
+      name: analysis
+    strategy:
+      type: Recreate
+    template:
+      metadata:
+        labels:
+          name: analysis
+      spec:
+        serviceAccountName: ${SERVICE_ACCOUNT}
+        initContainers:
+        - name: init-xray
+          image: ${INIT_CONTAINER_IMAGE}
+          command:
+            - 'sh'
+            - '-c'
+            - >
+              until nc -z -w 2 rabbitmq 5672 && echo rabbitmq ok && nc -z -w 2 mongodb 27017 && echo mongodb ok && nc -z -w 2 postgres 5432 && echo postgres ok ; do sleep 2; done;
+              mkdir -p /var/opt/jfrog/xray/data/config;
+              chmod 777 /var/opt/jfrog/xray/data/config;
+              cp /xray-config/xray_config.yaml /var/opt/jfrog/xray/data/config/xray_config.yaml;
+              chmod 777 /var/opt/jfrog/xray/data/config/xray_config.yaml;
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+          - mountPath: /var/opt/jfrog/xray/data
+            name: volume-xray-analysis
+          - mountPath: /xray-config/xray_config.yaml
+            name: xray-conf-setup
+            subPath: xray_config.yaml
+        containers:
+        - env:
+          - name: XRAYCONFIGPATH
+            value: /var/opt/jfrog/xray/data
+          image: ''
+          imagePullPolicy: IfNotPresent
+          name: analysis
+          ports:
+          - containerPort: 7000
+            protocol: TCP
+          volumeMounts:
+          - mountPath: /var/opt/jfrog/xray/data
+            name: volume-xray-analysis
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "1Gi"
+              cpu: "1"
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /debug/pprof/
+              port: 7000
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 10
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /debug/pprof/
+              port: 7000
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 10
+        securityContext:
+          supplementalGroups: [1035]
+        volumes:
+        - name: volume-xray-analysis
+          persistentVolumeClaim:
+            claimName: xray-data-pvc
+        - name: xray-conf-setup
+          configMap:
+            name: xray-conf-setup
+    triggers:
+    - type: ConfigChange
+    - type: ImageChange
+      imageChangeParams:
+        automatic: true
+        containerNames:
+          - analysis
+        from:
+          kind: ImageStreamTag
+          namespace: ${NAMESPACE}
+          name: xray-analysis:${XRAY_VERSION}
+
+parameters:
+  - name: NAMESPACE
+    description: Namespace
+    displayName: Namespace
+    required: true
+  - name: XRAY_VERSION
+    description: JFrog Xray Version
+    displayName: JFrog Xray Version
+    value: 1.10.1
+    required: true
+  - name: SERVICE_ACCOUNT
+    description: Service account
+    displayName: Service account
+    required: true
+  - name: INIT_CONTAINER_IMAGE
+    description: Init container image
+    displayName: Init container image
+    value: "alpine:3.6"
+    required: true
