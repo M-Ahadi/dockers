@@ -12,6 +12,6 @@ Here is list of dockers I use in my daily work and life.
 - Bale Platform Bot
 - Telegram Platform Bot
 
-## DevOps
+## Developments
 - JFrog Artifactory
 - Gitlab + Git Runner
