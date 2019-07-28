@@ -16,6 +16,12 @@ docker-compose run --rm openvpn easyrsa build-client-full $CLIENTNAME
 docker-compose run --rm openvpn easyrsa build-client-full $CLIENTNAME nopass
 ```
 
+Get list of the users
+
+```
+docker-compose run --rm openvpn ovpn_listclients
+```
+
 
 Revoke a user
 
