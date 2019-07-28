@@ -1,13 +1,25 @@
 Run these commands to start vpn server
 ```
-docker volume create --name openvpn
-docker run -v openvpn:/etc/openvpn --log-driver=none --rm kylemanna/openvpn ovpn_genconfig -u udp://<server ip>
-docker run -v openvpn:/etc/openvpn --log-driver=none --rm -it kylemanna/openvpn ovpn_initpki
-docker run -v openvpn:/etc/openvpn -d --restart always -p 1194:1194/udp --cap-add=NET_ADMIN kylemanna/openvpn 
+docker-compose run --rm openvpn ovpn_genconfig -u udp://<server ip>
+docker-compose run --rm openvpn ovpn_initpki
+docker-compose up -d
 ```
 
 Run these commands to add user 
 ```
-docker run -v openvpn:/etc/openvpn --log-driver=none --rm -it kylemanna/openvpn easyrsa build-client-full CLIENTNAME nopass
-docker run -v openvpn:/etc/openvpn --log-driver=none --rm kylemanna/openvpn ovpn_getclient CLIENTNAME > CLIENTNAME.ovpn
+export CLIENTNAME="your_client_name"
+# with a passphrase (recommended)
+docker-compose run --rm openvpn easyrsa build-client-full $CLIENTNAME
+# without a passphrase (not recommended)
+docker-compose run --rm openvpn easyrsa build-client-full $CLIENTNAME nopass
+```
+
+
+Revoke a user
+
+```
+# Keep the corresponding crt, key and req files.
+docker-compose run --rm openvpn ovpn_revokeclient $CLIENTNAME
+# Remove the corresponding crt, key and req files.
+docker-compose run --rm openvpn ovpn_revokeclient $CLIENTNAME remove
 ```
