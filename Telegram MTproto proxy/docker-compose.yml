@@ -1,0 +1,25 @@
+version: '2'
+
+services:
+    telegram-proxy-vaghteshadi:
+        restart: always
+        image: telegrammessenger/proxy:latest
+        container_name: tg-proxy-vaghteshadi
+        ports:
+          - 4581:443 #Proxy port, if you wish to change port - change left side 443 to another. Right side - it is port inside docker container
+          - 4488:2398
+        volumes:
+           - "proxy-config:/data"
+        env_file:
+           - ./config.env
+           
+    #tg-proxy-watchtower:
+    #    restart: always
+    #    image: v2tec/watchtower
+    #    container_name: tg-proxy-watchtower
+    #    volumes:
+    #      - /var/run/docker.sock:/var/run/docker.sock
+    #      - /root/.docker/config.json:/config.json
+    #    command: telegrammessenger/proxy:latest
+volumes:
+  proxy-config:
