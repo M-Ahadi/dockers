@@ -18,3 +18,4 @@ Here is list of dockers I use in my daily work and life.
 ## Developments
 - JFrog Artifactory
 - Gitlab + Git Runner
+- Confluence
