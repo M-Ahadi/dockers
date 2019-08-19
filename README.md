@@ -19,3 +19,5 @@ Here is list of dockers I use in my daily work and life.
 - JFrog Artifactory
 - Gitlab + Git Runner
 - Confluence
+- WIKI-JS v2
+- WIKI-Media

@@ -1,0 +1,44 @@
+version: "3"
+services:
+  db:
+    image: postgres:9-alpine
+    container_name: wiki_db
+    environment:
+      POSTGRES_DB: wiki
+      POSTGRES_PASSWORD: wikijsrocks
+      POSTGRES_USER: wikijs
+    logging:
+      driver: "none"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - wikinet
+
+  wiki:
+    image: requarks/wiki:beta
+    container_name: wiki_fa
+    volumes:
+      - "/Users/didier/wiki/repo:/var/wiki/repo:rw,z"
+      - ./config.yml:/var/wiki/config.yml
+    depends_on:
+      - db
+    environment:
+      DB_TYPE: postgres
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: wikijs
+      DB_PASS: wikijsrocks
+      DB_NAME: wiki
+    networks:
+      - wikinet
+   
+    ports:
+      - "3000:3000" # <-- replace with "80:3000" to listen on port 80 instead
+
+
+      
+networks:
+  wikinet:
+
+volumes:
+  db-data:
