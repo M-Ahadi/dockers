@@ -12,7 +12,7 @@ RUN apk add --update alpine-sdk \
                      libffi-dev \
                      zlib-dev
 
-RUN apk update && apk add tzdata libpq postgresql-dev build-base
+RUN apk update && apk add tzdata libpq build-base
 RUN apk add jpeg-dev zlib-dev freetype-dev lcms2-dev openjpeg-dev tiff-dev tk-dev tcl-dev && \
     cp /usr/share/zoneinfo/Asia/Tehran /etc/localtime && \
     echo $TZ > /etc/timezone
