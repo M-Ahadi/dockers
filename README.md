@@ -23,3 +23,8 @@ Here is list of dockers I use in my daily work and life.
 - Confluence
 - WIKI-JS v2
 - WIKI-Media
+
+
+## Chat
+- Jitsi Video Conference
+- Rocket.Chat
