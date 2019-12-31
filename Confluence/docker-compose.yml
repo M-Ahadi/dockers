@@ -40,7 +40,7 @@ services:
     environment:
       - 'POSTGRES_USER=confluencedb'
       # CHANGE THE PASSWORD!
-      - 'POSTGRES_PASSWORD=ASDKJH873efdsfasdasd'
+      - 'POSTGRES_PASSWORD=changeme'
       - 'POSTGRES_DB=confluencedb'
       - 'POSTGRES_ENCODING=UTF8'
       - 'POSTGRES_COLLATE=C'
