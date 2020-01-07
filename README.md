@@ -12,6 +12,7 @@ Here is list of dockers I use in my daily work and life.
 
 ## Log
 - Graylog
+- ELK Stack
 
 ## Bots
 - Bale Platform Bot

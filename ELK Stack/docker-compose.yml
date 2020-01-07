@@ -1,0 +1,232 @@
+version: '3'
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:$VERSION
+    user: root
+    container_name: elasticsearch
+    hostname: $HOSTNAME
+    environment:
+      - http.host=0.0.0.0
+      - transport.host=localhost
+      - network.host=0.0.0.0
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g -Des.http.cname_in_publish_address=true
+      - node.name=elasticsearch
+
+    cap_add:
+      - ALL
+    restart: always
+    volumes:
+      - /etc/localtime:/etc/localtime
+      - esdata:/usr/share/elasticsearch/data
+
+    ports:
+      - 9200:9200
+      - 9300:9300
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    healthcheck:
+      test: curl -f -k http://localhost:9200 || exit 1
+      interval: 10s
+      timeout: 2s
+      retries: 5
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:$VERSION
+    hostname: $HOSTNAME
+    container_name: kibana
+    environment:
+      SERVER_NAME: kibana
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+    ports:
+      - 5601:5601
+    volumes:
+      - /etc/localtime:/etc/localtime
+      - ./config/kibana/kibana.yml:/usr/share/kibana/config/kibana.yml
+    cap_add:
+      - ALL
+    restart: always
+    depends_on:
+       - elasticsearch 
+    healthcheck:
+      test: curl -s -f http://localhost:5601 || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+
+  metricbeat:
+    image: docker.elastic.co/beats/metricbeat:$VERSION
+    hostname: $HOSTNAME
+    restart: always
+    container_name: metricbeat
+    env_file:
+      - ./.env
+    environment:
+      - setup.kibana.host=kibana:5601
+      - output.elasticsearch.hosts=["elasticsearch:9200"]
+      - xpack.security.enabled=true
+    user: root
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro
+      - /proc:/hostfs/proc:ro
+      - /:/hostfs:ro
+    depends_on:
+      - elasticsearch
+    healthcheck:
+      test: metricbeat test config
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      
+      
+      
+  heartbeat:
+    image: docker.elastic.co/beats/heartbeat:$VERSION
+    hostname: $HOSTNAME
+    restart: always
+    container_name: heartbeat
+    command: --strict.perms=false
+    env_file:
+      - ./.env
+    environment:
+      - setup.kibana.host=kibana:5601
+      - output.elasticsearch.hosts=["elasticsearch:9200"]
+    depends_on:
+      - elasticsearch
+    healthcheck:
+      test: heartbeat test config
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      
+      
+      
+  packetbeat:
+    image: docker.elastic.co/beats/packetbeat:$VERSION
+    hostname: $HOSTNAME
+    restart: always
+    container_name: packetbeat
+    command: --strict.perms=false
+    env_file:
+      - ./.env
+    environment:
+      - setup.kibana.host=kibana:5601
+      - output.elasticsearch.hosts=["elasticsearch:9200"]
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+    depends_on:
+      - elasticsearch
+    healthcheck:
+      test: packetbeat test config
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      
+      
+      
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:$VERSION
+    hostname: $HOSTNAME
+    restart: always
+    command: --strict.perms=false
+    container_name: filebeat
+    env_file:
+      - ./.env
+    user: root
+    environment:
+      - setup.kibana.host=kibana:5601
+      - output.elasticsearch.hosts=["elasticsearch:9200"]
+    ports:
+      - 9000:9000
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - elasticsearch
+    healthcheck:
+      test: filebeat test config
+      interval: 30s
+      timeout: 15s
+      retries: 5
+        
+      
+      
+  apmserver:
+    image: docker.elastic.co/apm/apm-server:$VERSION
+    hostname: $HOSTNAME
+    restart: always
+    command: --strict.perms=false
+    container_name: ampserver
+    env_file:
+      - ./.env
+    ports:
+      - 8200:8200
+      - 8201:8200
+    user: root
+    environment:
+      - apm-server.host=0.0.0.0
+      - setup.kibana.host=kibana:5601
+    depends_on:
+      - elasticsearch
+    healthcheck:
+      test: curl -s https://localhost:8200/healthcheck >/dev/null; if [[ $$? == 52 ]]; then echo 0; else echo 1; fi
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+        
+  logstash:
+    image: docker.elastic.co/logstash/logstash:$VERSION
+    hostname: $HOSTNAME
+    container_name: logstash
+    restart: always
+    user: root
+    env_file:
+      - ./.env
+    environment:
+      - xpack.monitoring.elasticsearch.hosts=http://elasticsearch:9200
+    ports:
+      - 5044:5044
+      - 5044:5044/udp
+      - 9600:9600
+      - 5140:5140/udp
+      - 5140:5140
+    depends_on:
+      - elasticsearch
+    healthcheck:
+      test: bin/logstash -t
+      interval: 60s
+      timeout: 50s
+      retries: 5
+            
+            
+  nginx:
+    image: nginx:latest
+    restart: always
+    container_name: nginx
+    ports:
+        - 80:80
+        - 443:443
+    volumes:
+        - ./nginx-config/:/etc/nginx/conf.d/
+        - /etc/letsencrypt:/etc/letsencrypt
+    command: /bin/bash -c "nginx -g 'daemon off;'"
+    ulimits:
+      nproc: 65535
+    depends_on:
+      - elasticsearch
+      - kibana
+    healthcheck:
+      test: service nginx status || exit 1
+      interval: 60s
+      timeout: 50s
+      retries: 5
+      
+volumes:
+  esdata1:
+
+
