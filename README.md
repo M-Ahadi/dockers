@@ -9,13 +9,13 @@ Here is list of dockers I use in my daily work and life.
 - L2TP VPN Server
 - OPENVPN Server
 - Telegram MTproto proxy
+- Smart DNS
 
 ## Log
 - Graylog
 - ELK Stack
 
 ## Bots
-- Bale Platform Bot
 - Telegram Platform Bot
 
 ## Developments
