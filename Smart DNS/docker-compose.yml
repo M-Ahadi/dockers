@@ -1,0 +1,21 @@
+version: '3'
+services:
+  nginx-proxy:
+    image: nginx:latest
+    container_name: nginx-proxy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+
+  dnsmasq:
+    build: dnsmasq/.
+    image: dnsmasq
+    network_mode: host
+    container_name: dnsmasq-proxy
+    restart: always
+    volumes:
+      - ./dnsmasq/dnsmasq.conf:/etc/dnsmasq.conf
+      - ./dnsmasq/proxy.conf:/etc/dnsmasq.d/proxy.conf  

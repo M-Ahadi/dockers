@@ -1,7 +1,0 @@
-version: '3'
-services:
-  your_bot_docker_name:
-    image: your_bot_docker_name:0.1-1
-    container_name: your_bot_docker_name
-    restart: always
-
