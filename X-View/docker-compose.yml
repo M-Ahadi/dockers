@@ -1,0 +1,12 @@
+version: '3.7'
+
+services:
+  xview:
+    image: mojtabaahadi/x-view
+    restart: always
+    container_name: x-view
+    volumes:
+      - ./db:/x-view/db
+    environment:
+      - NGINX_PORT=4444
+    network_mode: "host"

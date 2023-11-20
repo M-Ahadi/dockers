@@ -10,6 +10,7 @@ Here is list of dockers I use in my daily work and life.
 - OPENVPN Server
 - Telegram MTproto proxy
 - Smart DNS
+- X-View
 
 ## Log
 - Graylog
@@ -33,3 +34,4 @@ Here is list of dockers I use in my daily work and life.
 
 ## Database
 - Oracle Database
+- Minio
