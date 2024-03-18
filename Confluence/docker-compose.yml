@@ -1,10 +1,14 @@
-version: '3.8'
+version: '2'
 
 services:
   confluence:
-    image: atlassian/confluence:8.3.2
-    container_name: confluence
+    user: root
     restart: always
+    image: atlassian/confluence-server:6.14.0-alpine
+    container_name: confluence
+    hostname: confluence
+    networks:
+      - confluencenet
     volumes:
       - confluencedata:/var/atlassian/application-data/confluence
       - ./atlassian-agent.jar:/opt/atlassian/confluence/confluence/WEB-INF/lib/atlassian-agent.jar
@@ -12,19 +16,25 @@ services:
       - '80:8090'
       - '8091:8091'
     environment:
-      - 'CATALINA_OPTS= -Xms2g -Xmx5g'
+      - 'CATALINA_OPTS= -Xms256m -Xmx1g'
       - 'CONFLUENCE_PROXY_NAME='
       - 'CONFLUENCE_PROXY_PORT='
       - 'CONFLUENCE_PROXY_SCHEME='
       - 'CONFLUENCE_DELAYED_START='
       - JAVA_OPTS=-javaagent:/opt/atlassian/confluence/confluence/WEB-INF/lib/atlassian-agent.jar ${JAVA_OPTS}
+    labels:
+      com.blacklabelops.description: "Atlassian Confluence"
+      com.blacklabelops.service: "confluence"
     depends_on:
       - postgresql
 
   postgresql:
+    restart: always
     image: postgres:11.5
     container_name: postgres
-    restart: always
+    hostname: postgres
+    networks:
+      - confluencenet
     volumes:
       - postgresqldata:/var/lib/postgresql/data
     environment:
@@ -35,9 +45,16 @@ services:
       - 'POSTGRES_ENCODING=UTF8'
       - 'POSTGRES_COLLATE=C'
       - 'POSTGRES_COLLATE_TYPE=C'
+    labels:
+      com.blacklabelops.description: "PostgreSQL Database Server"
+      com.blacklabelops.service: "postgresql"
 
 volumes:
   confluencedata:
     external: false
   postgresqldata:
     external: false
+
+networks:
+  confluencenet:
+    driver: bridge

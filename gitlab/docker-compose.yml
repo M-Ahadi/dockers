@@ -5,14 +5,16 @@ services:
     container_name: gitlab
     restart: always
     ports:
-      - "22:22"
-      - "80:80"
+      - "220:22"
+      - "800:80"
       - "443:443"
     volumes:
       - /srv/gitlab/data:/var/opt/gitlab
       - /srv/gitlab/logs:/var/log/gitlab
       - /srv/gitlab/config:/etc/gitlab
-
+    networks:
+      gitlab_network:
+        ipv4_address: 172.22.0.4
       
   gitlab-runner:
     restart: always
@@ -21,3 +23,16 @@ services:
     volumes:
       - /srv/gitlab-runner/config:/etc/gitlab-runner
       - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      gitlab_network:
+        ipv4_address: 172.22.0.3
+    depends_on:
+      - gitlab
+
+networks:
+  gitlab_network:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.22.0.0/16
+    
